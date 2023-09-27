@@ -5,6 +5,8 @@ import (
 	"github.com/Teyik0/api-sample-golang/db"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 )
 
 // func setLog() {
@@ -22,7 +24,12 @@ func main() {
 	log.Info("Starting the server...")
 
 	app := fiber.New()
-	db.Connect()
+	app.Use(logger.New())
+	app.Use(cors.New())
+
+	if err := db.Connect(); err != nil {
+		log.Fatal("Error connecting to database")
+	}
 
 	v1Api := app.Group("/api/v1", apiMiddleware) // /api
 
@@ -30,9 +37,9 @@ func main() {
 		return c.SendString("Hello, World 👋!")
 	})
 
-	v1Api.Get("/user/", controllers.GetUsers)
+	v1Api.Post("/user", controllers.AddUser)
+	v1Api.Get("/user", controllers.GetUsers)
 	v1Api.Get("/user/:id", controllers.GetUser)
-	v1Api.Post("/user/", controllers.AddUser)
 	v1Api.Put("/user/:id", controllers.UpdateUser)
 	v1Api.Delete("/user/:id", controllers.DeleteUser)
 

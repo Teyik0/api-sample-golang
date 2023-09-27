@@ -8,8 +8,28 @@ import (
 	"github.com/Teyik0/api-sample-golang/db"
 	"github.com/Teyik0/api-sample-golang/entities"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/log"
+	"github.com/labstack/gommon/log"
 )
+
+func AddUser(c *fiber.Ctx) error {
+	fmt.Println(time.Now().UTC().String(), "| POST /api/v1/user from : ", c.IP())
+	log.Info("| POST /api/v1/user from : ", c.IP(), " | ", c.Path())
+
+	user := new(entities.User)
+
+	if err := c.BodyParser(user); err != nil {
+		fmt.Println(err)
+		return c.Status(400).JSON(err.Error())
+	}
+
+	tx := db.Database.Create(&user)
+	if tx.Error != nil {
+		fmt.Println(tx.Error)
+		return c.Status(400).JSON(tx.Error)
+	}
+
+	return c.Status(201).JSON(fiber.Map{"status": "success", "message": "User has been created", "data": user})
+}
 
 func GetUsers(c *fiber.Ctx) error {
 	fmt.Println(time.Now().UTC().String(), "| GET /api/v1/user from : ", c.IP())
@@ -34,21 +54,6 @@ func GetUser(c *fiber.Ctx) error {
 	}
 
 	return c.Status(200).JSON(user)
-}
-
-func AddUser(c *fiber.Ctx) error {
-	fmt.Println(time.Now().UTC().String(), "| POST /api/v1/user from : ", c.IP())
-	log.Info("| POST /api/v1/user from : ", c.IP(), " | ", c.Path())
-
-	user := new(entities.User)
-
-	if err := c.BodyParser(user); err != nil {
-		return c.Status(503).SendString(err.Error())
-	}
-
-	db.Database.Create(&user)
-
-	return c.Status(201).JSON(user)
 }
 
 func UpdateUser(c *fiber.Ctx) error {

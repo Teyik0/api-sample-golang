@@ -29,14 +29,16 @@ func Connect() error {
 
 	db, err := gorm.Open(postgres.New(postgres.Config{
 		DSN:                  database_url,
-		PreferSimpleProtocol: true,
+		PreferSimpleProtocol: true, // disables implicit prepared statement usage
 	}), &gorm.Config{})
 
 	if err != nil {
 		panic("failed to connect database")
 	}
 
-	db.AutoMigrate(&entities.User{})
+	db.AutoMigrate((&entities.User{}))
+
+	Database = db
 
 	return nil
 }
