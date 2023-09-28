@@ -1,24 +1,51 @@
-version: '3.8'
+version: '3.9'
 services:
-  db:
+  postgresdb:
     image: postgres:latest
-    container_name: my_postgres_db
+    container_name: gofiber-prisma-postgres-db
     ports:
       - "5432:5432"
     environment:
       POSTGRES_USER: admin      # Remplacez par le nom d'utilisateur souhaité
       POSTGRES_PASSWORD: adminpwd  # Remplacez par le mot de passe souhaité
-      POSTGRES_DB: db   # Remplacez par le nom de la base de données souhaité
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      POSTGRES_DB: pgdatabase   # Remplacez par le nom de la base de données souhaité
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d db"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U admin -d pgdatabase"]
+      interval: 10s
       timeout: 5s
-      retries: 5
-    
-volumes:
-  postgres_data:
+      retries: 10
+    # volumes:
+    #   - gofiber_prisma_postgres_data:/var/lib/postgresql/data
+
+  # db-client:
+  #   image: dpage/pgadmin4:latest
+  #   container_name: PgAdmin
+  #   restart: always
+  #   ports:
+  #     - 8080:80
+  #   environment:
+  #     - PGADMIN_DEFAULT_EMAIL=michael@example.com
+  #     - PGADMIN_DEFAULT_PASSWORD=secret
+  #   depends_on:
+  #     - postgresdb
+  
+  go-app:
+    container_name: gofiber-api-prisma
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgres://admin:adminpwd@postgresdb:5432/pgdatabase
+    depends_on:
+      postgresdb:
+        condition: service_healthy
+    restart: always
+
+
+# volumes:
+#   gofiber_prisma_postgres_data:
 
 
 # psql -h localhost -p 5432 -U admin -d db
